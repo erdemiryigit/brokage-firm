@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres-container
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: brokage_firm
+    ports:
+      - "5432:5432"
+    networks:
+      - brokage
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-container
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - brokage
+
+networks:
+  brokage:
