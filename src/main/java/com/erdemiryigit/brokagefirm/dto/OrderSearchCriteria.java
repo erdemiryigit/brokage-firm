@@ -5,11 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
 public class OrderSearchCriteria {
-    private Long customerId;
+    private UUID customerId;
     private String assetName;
     private Order.OrderSide orderSide;
     private Order.OrderStatus status;

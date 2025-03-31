@@ -5,10 +5,11 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class OrderSpecification {
 
-    public static Specification<Order> withCustomerId(Long customerId) {
+    public static Specification<Order> withCustomerId(UUID customerId) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("customer").get("id"), customerId);
     }

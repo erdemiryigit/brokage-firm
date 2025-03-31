@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 
@@ -63,7 +64,7 @@ class UserAuthenticationServiceTest {
 
     @Test
     void loadUserByOrderId_whenOrderDoesNotExist_shouldThrowOrderNotFoundException() {
-        Long orderId = 1L;
+        UUID orderId = UUID.fromString("");
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
 
@@ -72,7 +73,7 @@ class UserAuthenticationServiceTest {
 
     @Test
     void loadUserByOrderId_whenCustomerDoesNotExist_shouldThrowUsernameNotFoundException() {
-        Long orderId = 1L;
+        UUID orderId = UUID.fromString("");
 
         Order order = new Order();
         order.setId(orderId);
@@ -85,20 +86,15 @@ class UserAuthenticationServiceTest {
 
     @Test
     void loadUserByOrderId_whenUserDoesNotExist_shouldThrowUsernameNotFoundException() {
-        Long orderId = 1L;
-        Long customerId = 2L;
+        UUID orderId = UUID.fromString("");
         String username = "testuser";
 
         Customer customer = new Customer();
-        customer.setId(customerId);
         customer.setName(username);
 
         Order order = new Order();
         order.setId(orderId);
         order.setCustomer(customer);
-
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(UsernameNotFoundException.class, () -> userAuthenticationService.loadUserByOrderId(orderId));
     }

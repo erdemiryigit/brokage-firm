@@ -3,6 +3,7 @@ package com.erdemiryigit.brokagefirm.util;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
+import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderResponseStatus;
 import com.erdemiryigit.brokagefirm.entity.Order;
@@ -32,6 +33,18 @@ public abstract class OrderMapper {
     @Named("mapOrderStatusForMatch")
     protected OrderResponseStatus mapOrderStatusForMatch(Order.OrderStatus status) {
         return Order.OrderStatus.MATCHED.equals(status)
+                ? OrderResponseStatus.SUCCESSFUL
+                : OrderResponseStatus.FAILED;
+    }
+
+    @Mapping(target = "customerId", source = "customer.id")
+    @Mapping(target = "ticker", source = "asset.ticker")
+    @Mapping(target = "orderResponseStatus", source = "status", qualifiedByName = "mapOrderStatusForDelete")
+    public abstract OrderDeleteResponse toOrderDeleteResponse(Order order);
+
+    @Named("mapOrderStatusForDelete")
+    protected OrderResponseStatus mapOrderStatusForDelete(Order.OrderStatus status) {
+        return Order.OrderStatus.CANCELLED.equals(status)
                 ? OrderResponseStatus.SUCCESSFUL
                 : OrderResponseStatus.FAILED;
     }

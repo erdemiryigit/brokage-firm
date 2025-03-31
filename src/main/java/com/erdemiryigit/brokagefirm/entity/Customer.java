@@ -1,7 +1,17 @@
 package com.erdemiryigit.brokagefirm.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "customers")
@@ -11,9 +21,10 @@ import lombok.*;
 @Builder
 public class Customer {
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    private Long id; // You can use UUID as a string or generate numeric ID
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     @Column(nullable = false)
     private String name;

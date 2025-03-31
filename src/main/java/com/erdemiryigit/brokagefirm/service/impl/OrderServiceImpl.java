@@ -1,11 +1,11 @@
 package com.erdemiryigit.brokagefirm.service.impl;
 
-import com.erdemiryigit.brokagefirm.config.annotations.IsUser;
 import com.erdemiryigit.brokagefirm.dto.CustomerAssetSearchCriteria;
 import com.erdemiryigit.brokagefirm.dto.OrderSearchCriteria;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
+import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
 import com.erdemiryigit.brokagefirm.entity.Asset;
 import com.erdemiryigit.brokagefirm.entity.Customer;
@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -42,7 +43,6 @@ import java.util.concurrent.locks.Lock;
 
 @Service
 @RequiredArgsConstructor
-@IsUser
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final AssetRepository assetRepository;
@@ -54,10 +54,9 @@ public class OrderServiceImpl implements OrderService {
     private static final String TRY = "TRY";
     private final OrderMapper orderMapper;
 
-    @PreAuthorize("authentication.principal.username == @customerService.getUsernameByOrderId(#orderId) || hasAuthority('ROLE_ADMIN')")
     @Override
     @Transactional
-    public Order deleteOrder(Long orderId) throws InterruptedException {
+    public OrderDeleteResponse deleteOrder(UUID orderId) throws InterruptedException {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order with id: " + orderId + " NOT found!"));
 
@@ -112,7 +111,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        return order;
+        return orderMapper.toOrderDeleteResponse(order);
     }
 
     @Override
@@ -235,14 +234,8 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findAll(spec);
     }
 
-
     @Transactional(readOnly = true)
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Order> getOrders(Long customerId, LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Order> getOrders(UUID customerId, LocalDateTime startDate, LocalDateTime endDate) {
         return orderRepository.findByCustomerIdAndCreateDateBetween(customerId, startDate, endDate);
     }
 

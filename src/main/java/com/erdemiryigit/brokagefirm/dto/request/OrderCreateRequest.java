@@ -7,10 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record OrderCreateRequest(
         @NotNull(message = "Customer ID cannot be null")
-        Long customerId,
+        UUID customerId,
 
         @NotBlank(message = "Ticker cannot be blank")
         String ticker,
