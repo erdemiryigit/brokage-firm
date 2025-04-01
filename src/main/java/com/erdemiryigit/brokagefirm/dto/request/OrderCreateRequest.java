@@ -1,6 +1,6 @@
 package com.erdemiryigit.brokagefirm.dto.request;
 
-import com.erdemiryigit.brokagefirm.entity.Order;
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +17,7 @@ public record OrderCreateRequest(
         String ticker,
 
         @NotNull(message = "Order side cannot be null")
-        Order.OrderSide orderSide,
+        OrderSide orderSide,
 
         @NotNull(message = "Size cannot be null")
         @Min(value = 1, message = "Size must be at least 1")

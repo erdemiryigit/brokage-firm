@@ -1,6 +1,7 @@
 package com.erdemiryigit.brokagefirm.dto.response;
 
-import com.erdemiryigit.brokagefirm.entity.Order;
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -12,8 +13,8 @@ public record OrderGetResponse(
         UUID id,
         UUID customerId,
         String ticker,
-        Order.OrderSide orderSide,
-        Order.OrderStatus orderStatus,
+        OrderSide orderSide,
+        OrderStatus orderStatus,
         BigDecimal size,
         BigDecimal price
 ) {

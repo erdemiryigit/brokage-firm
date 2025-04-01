@@ -1,5 +1,7 @@
 package com.erdemiryigit.brokagefirm.service;
 
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
@@ -68,7 +70,7 @@ public class OrderServiceTest {
                 .build();
         customerAssetRepository.save(customerFunds);
 
-        OrderCreateRequest request = new OrderCreateRequest(customer.getId(), asset.getTicker(), Order.OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(10));
+        OrderCreateRequest request = new OrderCreateRequest(customer.getId(), asset.getTicker(), OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(10));
         orderService.createOrder(request);
 
         CustomerAsset customerFundsAfterOrder = customerAssetRepository.findByCustomerIdAndAssetTicker(customer.getId(), tryAsset.getTicker()).get();
@@ -99,7 +101,7 @@ public class OrderServiceTest {
                 .usableSize(BigDecimal.valueOf(100)).build();
         customerFunds = customerAssetRepository.save(customerFunds);
 
-        OrderCreateRequest request = new OrderCreateRequest(customer.getId(), asset.getTicker(), Order.OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(999));
+        OrderCreateRequest request = new OrderCreateRequest(customer.getId(), asset.getTicker(), OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(999));
 
         Assertions.assertThrows(RuntimeException.class, () -> orderService.createOrder(request));
 
@@ -136,7 +138,7 @@ public class OrderServiceTest {
 
         // Create an order
         OrderCreateRequest request = new OrderCreateRequest(customer.getId(), asset.getTicker(),
-                Order.OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(10));
+                OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(10));
         OrderCreateResponse createdOrder = orderService.createOrder(request);
 
         // Verify funds were locked
@@ -150,7 +152,7 @@ public class OrderServiceTest {
         orderService.deleteOrder(createdOrder.id());
 
         // Verify order was canceled
-        Assertions.assertEquals(orderRepository.findById(createdOrder.id()).get().getStatus(), Order.OrderStatus.CANCELLED);
+        Assertions.assertEquals(orderRepository.findById(createdOrder.id()).get().getStatus(), OrderStatus.CANCELLED);
 
         // Verify funds were released
         CustomerAsset customerFundsAfterDelete = customerAssetRepository.findByCustomerIdAndAssetTicker(
@@ -196,7 +198,7 @@ public class OrderServiceTest {
         OrderCreateRequest request = new OrderCreateRequest(
                 customer.getId(),
                 teslaAsset.getTicker(),
-                Order.OrderSide.SELL,
+                OrderSide.SELL,
                 BigDecimal.ONE,
                 BigDecimal.valueOf(10));
         OrderCreateResponse createdOrder = orderService.createOrder(request);
@@ -213,7 +215,7 @@ public class OrderServiceTest {
         orderService.deleteOrder(createdOrder.id());
 
         // Verify order was canceled
-        Assertions.assertEquals(orderRepository.findById(createdOrder.id()).get().getStatus(), Order.OrderStatus.CANCELLED);
+        Assertions.assertEquals(orderRepository.findById(createdOrder.id()).get().getStatus(), OrderStatus.CANCELLED);
 
         // Verify funds were released
         CustomerAsset customerAssetAfterDelete = customerAssetRepository.findByCustomerIdAndAssetTicker(
@@ -255,7 +257,7 @@ public class OrderServiceTest {
         customerAssetRepository.save(customerAsset);
 
         OrderCreateRequest request = new OrderCreateRequest(customer.getId(), teslaAsset.getTicker(),
-                Order.OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(10));
+                OrderSide.BUY, BigDecimal.ONE, BigDecimal.valueOf(10));
         OrderCreateResponse createdOrder = orderService.createOrder(request);
         orderService.deleteOrder(createdOrder.id());
 
@@ -297,7 +299,7 @@ public class OrderServiceTest {
         OrderCreateRequest request = new OrderCreateRequest(
                 customer.getId(),
                 teslaAsset.getTicker(),
-                Order.OrderSide.SELL,
+                OrderSide.SELL,
                 BigDecimal.ONE,
                 BigDecimal.valueOf(10));
         OrderCreateResponse createdOrder = orderService.createOrder(request);
@@ -335,7 +337,7 @@ public class OrderServiceTest {
         OrderCreateRequest request = new OrderCreateRequest(
                 customer.getId(),
                 teslaAsset.getTicker(),
-                Order.OrderSide.BUY,
+                OrderSide.BUY,
                 BigDecimal.valueOf(10), // price
                 BigDecimal.valueOf(5)   // size
         );
@@ -402,7 +404,7 @@ public class OrderServiceTest {
         OrderCreateRequest request = new OrderCreateRequest(
                 customer.getId(),
                 teslaAsset.getTicker(),
-                Order.OrderSide.SELL,
+                OrderSide.SELL,
                 BigDecimal.valueOf(10), // price
                 BigDecimal.valueOf(5)   // size
         );
@@ -460,7 +462,7 @@ public class OrderServiceTest {
         OrderCreateRequest request = new OrderCreateRequest(
                 customer.getId(),
                 teslaAsset.getTicker(),
-                Order.OrderSide.BUY,
+                OrderSide.BUY,
                 BigDecimal.valueOf(10),
                 BigDecimal.valueOf(5)
         );
@@ -492,10 +494,10 @@ public class OrderServiceTest {
         Order order = Order.builder()
                 .customer(customer)
                 .asset(teslaAsset)
-                .orderSide(Order.OrderSide.BUY)
+                .orderSide(OrderSide.BUY)
                 .size(BigDecimal.valueOf(5))
                 .price(BigDecimal.valueOf(10))
-                .status(Order.OrderStatus.PENDING)
+                .status(OrderStatus.PENDING)
                 .createDate(LocalDateTime.now())
                 .build();
         order = orderRepository.save(order);
@@ -537,10 +539,10 @@ public class OrderServiceTest {
         Order order = Order.builder()
                 .customer(customer)
                 .asset(teslaAsset)
-                .orderSide(Order.OrderSide.SELL)
+                .orderSide(OrderSide.SELL)
                 .size(BigDecimal.valueOf(5))
                 .price(BigDecimal.valueOf(10))
-                .status(Order.OrderStatus.PENDING)
+                .status(OrderStatus.PENDING)
                 .createDate(LocalDateTime.now())
                 .build();
         order = orderRepository.save(order);

@@ -1,6 +1,7 @@
 package com.erdemiryigit.brokagefirm.specification;
 
-import com.erdemiryigit.brokagefirm.entity.Order;
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,8 +14,8 @@ import java.util.UUID;
 public class OrderSearchCriteria {
     private UUID customerId;
     private String assetName;
-    private Order.OrderSide orderSide;
-    private Order.OrderStatus status;
+    private OrderSide orderSide;
+    private OrderStatus status;
     private BigDecimal price;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;

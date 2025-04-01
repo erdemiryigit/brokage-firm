@@ -1,7 +1,6 @@
 package com.erdemiryigit.brokagefirm.util;
 
-import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
-import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
@@ -20,8 +19,8 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public abstract class OrderMapper {
     @Named("mapOrderStatusForCreate")
-    protected OrderResponseStatus mapOrderStatusForCreate(Order.OrderStatus status) {
-        return Order.OrderStatus.PENDING.equals(status)
+    protected OrderResponseStatus mapOrderStatusForCreate(OrderStatus status) {
+        return OrderStatus.PENDING.equals(status)
                 ? OrderResponseStatus.SUCCESSFUL
                 : OrderResponseStatus.FAILED;
     }
@@ -32,8 +31,8 @@ public abstract class OrderMapper {
     public abstract OrderCreateResponse toOrderCreateResponse(Order order);
 
     @Named("mapOrderStatusForMatch")
-    protected OrderResponseStatus mapOrderStatusForMatch(Order.OrderStatus status) {
-        return Order.OrderStatus.MATCHED.equals(status)
+    protected OrderResponseStatus mapOrderStatusForMatch(OrderStatus status) {
+        return OrderStatus.MATCHED.equals(status)
                 ? OrderResponseStatus.SUCCESSFUL
                 : OrderResponseStatus.FAILED;
     }
@@ -44,8 +43,8 @@ public abstract class OrderMapper {
     public abstract OrderDeleteResponse toOrderDeleteResponse(Order order);
 
     @Named("mapOrderStatusForDelete")
-    protected OrderResponseStatus mapOrderStatusForDelete(Order.OrderStatus status) {
-        return Order.OrderStatus.CANCELLED.equals(status)
+    protected OrderResponseStatus mapOrderStatusForDelete(OrderStatus status) {
+        return OrderStatus.CANCELLED.equals(status)
                 ? OrderResponseStatus.SUCCESSFUL
                 : OrderResponseStatus.FAILED;
     }

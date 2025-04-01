@@ -1,5 +1,7 @@
 package com.erdemiryigit.brokagefirm.controller;
 
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import com.erdemiryigit.brokagefirm.config.annotations.IsCustomer;
 import com.erdemiryigit.brokagefirm.config.annotations.IsEmployee;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
@@ -7,9 +9,7 @@ import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
-import com.erdemiryigit.brokagefirm.entity.Order;
 import com.erdemiryigit.brokagefirm.service.OrderService;
-import com.erdemiryigit.brokagefirm.service.UserAuthenticationService;
 import com.erdemiryigit.brokagefirm.specification.CustomerAssetSearchCriteria;
 import com.erdemiryigit.brokagefirm.specification.OrderSearchCriteria;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,8 +57,8 @@ public class OrderController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime endDate,
             @RequestParam(required = false) String assetName,
-            @RequestParam(required = false) Order.OrderSide orderSide,
-            @RequestParam(required = false) Order.OrderStatus status,
+            @RequestParam(required = false) OrderSide orderSide,
+            @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) BigDecimal price,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,

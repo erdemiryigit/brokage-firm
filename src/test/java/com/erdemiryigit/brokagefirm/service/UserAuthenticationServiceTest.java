@@ -1,5 +1,7 @@
 package com.erdemiryigit.brokagefirm.service;
 
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import com.erdemiryigit.brokagefirm.entity.Customer;
 import com.erdemiryigit.brokagefirm.entity.Order;
 import com.erdemiryigit.brokagefirm.entity.User;
@@ -45,10 +47,10 @@ class UserAuthenticationServiceTest {
 
         Order order = new Order();
         order.setCustomer(customer);
-        order.setOrderSide(Order.OrderSide.BUY);
+        order.setOrderSide(OrderSide.BUY);
         order.setSize(BigDecimal.valueOf(10));
         order.setPrice(BigDecimal.valueOf(100));
-        order.setStatus(Order.OrderStatus.PENDING);
+        order.setStatus(OrderStatus.PENDING);
         order.setCreateDate(java.time.LocalDateTime.now());
         order = orderRepository.save(order);
 

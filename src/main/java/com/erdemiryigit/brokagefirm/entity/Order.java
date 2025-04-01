@@ -1,5 +1,7 @@
 package com.erdemiryigit.brokagefirm.entity;
 
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -25,16 +27,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Order {
-
-    public enum OrderSide {
-        BUY,
-        SELL
-    }
-    public enum OrderStatus {
-        PENDING,
-        MATCHED,
-        CANCELLED
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,5 +1,7 @@
 package com.erdemiryigit.brokagefirm.specification;
 
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import com.erdemiryigit.brokagefirm.entity.Order;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -19,12 +21,12 @@ public class OrderSpecification {
                 criteriaBuilder.equal(root.get("asset").get("ticker"), assetName);
     }
 
-    public static Specification<Order> withOrderSide(Order.OrderSide orderSide) {
+    public static Specification<Order> withOrderSide(OrderSide orderSide) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("orderSide"), orderSide);
     }
 
-    public static Specification<Order> withStatus(Order.OrderStatus status) {
+    public static Specification<Order> withStatus(OrderStatus status) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("status"), status);
     }

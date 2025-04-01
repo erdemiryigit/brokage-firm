@@ -2,6 +2,8 @@ package com.erdemiryigit.brokagefirm.service.impl;
 
 import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
+import com.erdemiryigit.brokagefirm.enums.OrderStatus;
 import com.erdemiryigit.brokagefirm.specification.CustomerAssetSearchCriteria;
 import com.erdemiryigit.brokagefirm.specification.OrderSearchCriteria;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
@@ -33,8 +35,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.integration.support.locks.LockRegistry;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,13 +68,13 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order with id: " + orderId + " NOT found!"));
 
-        if (order.getStatus() != Order.OrderStatus.PENDING) {
+        if (order.getStatus() != OrderStatus.PENDING) {
             throw new OrderStatusException("Only pending orders can be cancelled, this order is already " + order.getStatus());
         }
 
         Asset tryAsset = assetRepository.findById(TRY).orElseThrow(() -> new AssetNotFoundException("Asset " + TRY + " NOT found!"));
 
-        if (Order.OrderSide.BUY == order.getOrderSide()) {
+        if (OrderSide.BUY == order.getOrderSide()) {
             // For BUY orders, return money to TRY balance
             CustomerAsset customerFunds = customerAssetRepository.findByCustomerIdAndAssetTicker(
                             order.getCustomer().getId(), tryAsset.getTicker())
@@ -91,11 +91,11 @@ public class OrderServiceImpl implements OrderService {
                 customerFunds.setUsableSize(customerFunds.getUsableSize().add(amountToReturn));
 
                 customerAssetRepository.save(customerFunds);
-                order.setStatus(Order.OrderStatus.CANCELLED);
+                order.setStatus(OrderStatus.CANCELLED);
             } finally {
                 customerAssetLock.unlock();
             }
-        } else if (Order.OrderSide.SELL == order.getOrderSide()) {
+        } else if (OrderSide.SELL == order.getOrderSide()) {
             // For SELL orders, return asset quantity
             CustomerAsset customerAsset = customerAssetRepository.findByCustomerIdAndAssetTicker(
                             order.getCustomer().getId(), order.getAsset().getTicker())
@@ -113,7 +113,7 @@ public class OrderServiceImpl implements OrderService {
                 customerAsset.setUsableSize(customerAsset.getUsableSize().add(order.getSize()));
 
                 customerAssetRepository.save(customerAsset);
-                order.setStatus(Order.OrderStatus.CANCELLED);
+                order.setStatus(OrderStatus.CANCELLED);
             } finally {
                 customerAssetLock.unlock();
             }
@@ -131,12 +131,12 @@ public class OrderServiceImpl implements OrderService {
         Asset asset = assetRepository.findById(orderCreateRequest.ticker())
                 .orElseThrow(() -> new AssetNotFoundException("Asset " + orderCreateRequest.ticker() + " NOT found!"));
 
-        Order.OrderSide orderSide = orderCreateRequest.orderSide();
+        OrderSide orderSide = orderCreateRequest.orderSide();
 
         Customer customer = customerRepository.findById(orderCreateRequest.customerId())
                 .orElseThrow(() -> new CustomerNotFoundException("Customer with id:" + orderCreateRequest.customerId() + " NOT found!"));
 
-        if (Order.OrderSide.BUY == orderSide) {
+        if (OrderSide.BUY == orderSide) {
             CustomerAsset customerFunds = customerAssetRepository.findByCustomerIdAndAssetTicker(
                             orderCreateRequest.customerId(), tryAsset.getTicker())
                     .orElseThrow(() -> new CustomerAssetNotFoundException("Customer asset" + tryAsset.getTicker() + " NOT found for customer id: " + orderCreateRequest.customerId()));
@@ -162,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
                 customerAssetLock.unlock();
             }
 
-        } else if (Order.OrderSide.SELL == orderSide) {
+        } else if (OrderSide.SELL == orderSide) {
             CustomerAsset customerAsset = customerAssetRepository.findByCustomerIdAndAssetTicker(
                             orderCreateRequest.customerId(), orderCreateRequest.ticker())
                     .orElseThrow(() -> new CustomerAssetNotFoundException(
@@ -197,7 +197,7 @@ public class OrderServiceImpl implements OrderService {
                 .orderSide(orderCreateRequest.orderSide())
                 .size(orderCreateRequest.size())
                 .price(orderCreateRequest.price())
-                .status(Order.OrderStatus.PENDING) // Orders should be created with PENDING status.
+                .status(OrderStatus.PENDING) // Orders should be created with PENDING status.
                 .createDate(LocalDateTime.now())
                 .build());
 
@@ -208,7 +208,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderMatchResponse matchOrder(OrderMatchRequest orderMatchRequest) throws InterruptedException {
         Order order = orderRepository.findById(orderMatchRequest.id()).orElseThrow(() -> new OrderNotFoundException("Order to be matched NOT found!"));
 
-        if (!order.getStatus().equals(Order.OrderStatus.PENDING)) {
+        if (!order.getStatus().equals(OrderStatus.PENDING)) {
             throw new OrderStatusException(
                     "Order to be matched has to be in PENDING status! Order with id " + orderMatchRequest.id() + " status is " + order.getStatus());
         }
@@ -220,7 +220,7 @@ public class OrderServiceImpl implements OrderService {
         Customer customer = customerRepository.findById(order.getCustomer().getId())
                 .orElseThrow(() -> new CustomerNotFoundException("Customer with id:" + order.getCustomer().getId() + " NOT found!"));
 
-        Order.OrderSide orderSide = order.getOrderSide();
+        OrderSide orderSide = order.getOrderSide();
 
         // parasini bulup sizeindan orderin amountu kadar dusecegiz, usabledan dusmustuk
         CustomerAsset customerFunds = customerAssetRepository.findByCustomerIdAndAssetTicker(
@@ -230,7 +230,7 @@ public class OrderServiceImpl implements OrderService {
         // For BUY orders, we might need to create a new asset record for first-time purchases
         // For SELL orders, asset must already exist
         CustomerAsset customerAsset;
-        if (order.getOrderSide() == Order.OrderSide.BUY) {
+        if (order.getOrderSide() == OrderSide.BUY) {
             customerAsset = customerAssetRepository.findByCustomerIdAndAssetTicker(
                             customer.getId(), stockAsset.getTicker())
                     .orElseGet(() -> {
@@ -261,7 +261,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             BigDecimal orderAmount = order.getPrice().multiply(order.getSize());
-            if (orderSide == Order.OrderSide.BUY) {
+            if (orderSide == OrderSide.BUY) {
                 customerFunds.setSize(customerFunds.getSize().subtract(orderAmount)); // aliyorken fundstan cikartiyoruz assete ekliyoruz
                 customerAsset.setSize(customerAsset.getSize().add(order.getSize()));
                 customerAsset.setUsableSize(customerAsset.getUsableSize().add(order.getSize())); // usable size da artmali
@@ -275,7 +275,7 @@ public class OrderServiceImpl implements OrderService {
             customerAssetRepository.save(customerAsset);
 
             // her sey okeyse orderin statusu matche cekilir ve savelenir
-            order.setStatus(Order.OrderStatus.MATCHED);
+            order.setStatus(OrderStatus.MATCHED);
             Order orderSaved = orderRepository.save(order);
             return orderMapper.toOrderMatchResponse(orderSaved);
         } finally {
