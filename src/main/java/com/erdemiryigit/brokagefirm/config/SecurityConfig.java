@@ -1,5 +1,6 @@
 package com.erdemiryigit.brokagefirm.config;
 
+import com.erdemiryigit.brokagefirm.exception.GlobalExceptionHandler;
 import com.erdemiryigit.brokagefirm.service.UserAuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,18 +24,21 @@ public class SecurityConfig {
     private final UserAuthenticationService userAuthenticationService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Only permit unauthenticated access to these paths
-                        .requestMatchers("/api/v1/**","/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/v1/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // Require authentication for API endpoints
-                        //.requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
-                        //.requestMatchers("/api/v1/orders/**").hasAnyAuthority("USER", "ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/v1/orders/**").hasAnyAuthority("EMPLOYEE", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userAuthenticationService)
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
                 // Add HTTP Basic Authentication
                 .httpBasic(Customizer.withDefaults());
 

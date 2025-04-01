@@ -28,23 +28,23 @@ VALUES ('e1e2e3e4-f1f2-a1a2-b1b2-c1c2c3c4c5c6', 'EMPLOYEE');
 INSERT INTO roles (id, name)
 VALUES ('f1f2f3f4-a1a2-b1b2-c1c2-d1d2d3d4d5d6', 'CUSTOMER');
 
--- Insert Users with UUIDs
+-- Insert Users with UUIDs (password = username)
 INSERT INTO users (id, username, password)
 VALUES ('a2a3a4a5-b2b3-c2c3-d2d3-e2e3e4e5e6e7',
         'admin',
-        '$2a$10$xn3LI/AjqicFYZFruSwve.681477XaVNaUQbr1gioaWPn4t1KsnmG');
+        '$2a$10$KWy3ApIGp4V1bI/p11iOJuQ7mY3p0QRokr8YGMSqyAZP6m17.ZsdC');
 INSERT INTO users (id, username, password)
 VALUES ('b2b3b4b5-c2c3-d2d3-e2e3-f2f3f4f5f6f7',
         'employee',
-        '$2a$10$E/FLCSMu7A9v92FDWciR6.xRcsKu9tT0WJkIUfP9G4syOF1sIZ.lK');
+        '$2a$10$UVH7SVYmF1B0NTe5hTBtmuJmqJ4M0MBY87DMigpFdGtOhhx/ZVRqK');
 INSERT INTO users (id, username, password)
 VALUES ('c2c3c4c5-d2d3-e2e3-f2f3-a2a3a4a5a6a7',
         'customer1',
-        '$2a$10$e87B94p61QJ5LPPwFudqt.YwEEJz/K5fNKTHdIvXwjnC.Y5JsyvMy');
+        '$2a$10$gMa/0T8zyX0lFVVNtMvU9eyFpNKvA6IxEi4hxn0LS9pWVbPlNrV7i');
 INSERT INTO users (id, username, password)
 VALUES ('d2d3d4d5-e2e3-f2f3-a2a3-b2b3b4b5b6b7',
         'customer2',
-        '$2a$10$E/FLCSMu7A9v92FDWciR6.xRcsKu9tT0WJkIUfP9G4syOF1sIZ.lK');
+        '$2a$10$ZGqDw/shj2Wl5Wk1pDsHeeKVyjyFTt9UpEWQVZcvfnLXpY5TvqZLG');
 
 -- Insert User-Role relationships
 INSERT INTO user_role (user_id, role_id)
@@ -55,6 +55,9 @@ VALUES ('b2b3b4b5-c2c3-d2d3-e2e3-f2f3f4f5f6f7',
         'e1e2e3e4-f1f2-a1a2-b1b2-c1c2c3c4c5c6');
 INSERT INTO user_role (user_id, role_id)
 VALUES ('c2c3c4c5-d2d3-e2e3-f2f3-a2a3a4a5a6a7',
+        'f1f2f3f4-a1a2-b1b2-c1c2-d1d2d3d4d5d6');
+INSERT INTO user_role (user_id, role_id)
+VALUES ('d2d3d4d5-e2e3-f2f3-a2a3-b2b3b4b5b6b7',
         'f1f2f3f4-a1a2-b1b2-c1c2-d1d2d3d4d5d6');
 
 -- Insert CustomerAssets with UUIDs

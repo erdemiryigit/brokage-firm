@@ -1,14 +1,14 @@
 package com.erdemiryigit.brokagefirm.service;
 
-import com.erdemiryigit.brokagefirm.dto.CustomerAssetSearchCriteria;
-import com.erdemiryigit.brokagefirm.dto.OrderSearchCriteria;
+import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
+import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
+import com.erdemiryigit.brokagefirm.specification.CustomerAssetSearchCriteria;
+import com.erdemiryigit.brokagefirm.specification.OrderSearchCriteria;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
-import com.erdemiryigit.brokagefirm.entity.CustomerAsset;
-import com.erdemiryigit.brokagefirm.entity.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +19,14 @@ import java.util.UUID;
 public interface OrderService {
 
     @Transactional(readOnly = true)
-    List<Order> searchOrders(OrderSearchCriteria criteria);
+    List<OrderGetResponse> searchOrders(OrderSearchCriteria criteria);
 
     OrderCreateResponse createOrder(OrderCreateRequest orderCreateRequest) throws InterruptedException;
 
     OrderDeleteResponse deleteOrder(UUID orderId) throws InterruptedException;
 
-    // todo kod tekrarini duzelt
     OrderMatchResponse matchOrder(OrderMatchRequest orderMatchRequest) throws InterruptedException;
 
     @Transactional(readOnly = true)
-    List<CustomerAsset> searchAssets(CustomerAssetSearchCriteria criteria);
+    List<CustomerAssetGetResponse> searchAssets(CustomerAssetSearchCriteria criteria);
 }

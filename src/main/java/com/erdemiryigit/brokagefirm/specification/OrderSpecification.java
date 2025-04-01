@@ -34,18 +34,34 @@ public class OrderSpecification {
                 criteriaBuilder.between(root.get("createDate"), startDate, endDate);
     }
 
-    public static Specification<Order> withPriceGreaterThan(Double price) {
+    public static Specification<Order> withPriceGreaterThan(BigDecimal price) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.greaterThanOrEqualTo(root.get("price"), BigDecimal.valueOf(price));
+                criteriaBuilder.greaterThanOrEqualTo(root.get("price"), price);
     }
 
-    public static Specification<Order> withPriceLessThan(Double price) {
+    public static Specification<Order> withPriceLessThan(BigDecimal price) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.lessThanOrEqualTo(root.get("price"), BigDecimal.valueOf(price));
+                criteriaBuilder.lessThanOrEqualTo(root.get("price"), price);
     }
 
-    public static Specification<Order> withSizeEquals(Integer size) {
+    public static Specification<Order> withPriceEquals(BigDecimal price) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("size"), BigDecimal.valueOf(size));
+                criteriaBuilder.equal(root.get("price"), price);
     }
+
+    public static Specification<Order> withSizeEquals(BigDecimal size) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("size"), size);
+    }
+
+    public static Specification<Order> withSizeGreaterThan(BigDecimal size) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.greaterThanOrEqualTo(root.get("size"), size);
+    }
+
+    public static Specification<Order> withSizeLessThan(BigDecimal size) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.lessThanOrEqualTo(root.get("size"), size);
+    }
+
 }

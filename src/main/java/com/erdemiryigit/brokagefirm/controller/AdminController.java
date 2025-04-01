@@ -1,5 +1,6 @@
 package com.erdemiryigit.brokagefirm.controller;
 
+import com.erdemiryigit.brokagefirm.config.annotations.IsAdmin;
 import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
 import com.erdemiryigit.brokagefirm.service.OrderService;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@IsAdmin
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -20,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
     private final OrderService orderService;
 
-    //@PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Match Order", description = "Match a pending order.")
     @PostMapping
     public ResponseEntity<OrderMatchResponse> matchOrder(@RequestBody @Valid OrderMatchRequest orderMatchRequest) {

@@ -4,6 +4,7 @@ import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
+import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderResponseStatus;
 import com.erdemiryigit.brokagefirm.entity.Order;
@@ -54,11 +55,11 @@ public abstract class OrderMapper {
     @Mapping(target = "orderResponseStatus", source = "status", qualifiedByName = "mapOrderStatusForMatch")
     public abstract OrderMatchResponse toOrderMatchResponse(Order order);
 
-    public abstract Order toOrder(OrderCreateRequest orderCreateRequest);
+    @Mapping(target = "customerId", source = "customer.id")
+    @Mapping(target = "ticker", source = "asset.ticker")
+    @Mapping(target = "orderStatus", source = "status")
+    public abstract OrderGetResponse toOrderGetResponse(Order order);
 
-    public abstract Order toOrder(OrderMatchRequest orderMatchRequest);
-
-    // todo response tiplerini ayir
-    public abstract List<OrderCreateResponse> toOrderResponseList(List<Order> orderList);
+    public abstract List<OrderGetResponse> toOrderGetResponseList(List<Order> orderList);
 
 }

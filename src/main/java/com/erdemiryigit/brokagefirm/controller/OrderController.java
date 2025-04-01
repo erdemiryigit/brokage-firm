@@ -1,20 +1,19 @@
 package com.erdemiryigit.brokagefirm.controller;
 
-import com.erdemiryigit.brokagefirm.dto.CustomerAssetSearchCriteria;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
-import com.erdemiryigit.brokagefirm.dto.OrderSearchCriteria;
+import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
-import com.erdemiryigit.brokagefirm.entity.Asset;
-import com.erdemiryigit.brokagefirm.entity.CustomerAsset;
+import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
 import com.erdemiryigit.brokagefirm.entity.Order;
-import com.erdemiryigit.brokagefirm.exception.OrderNotFoundException;
 import com.erdemiryigit.brokagefirm.service.OrderService;
 import com.erdemiryigit.brokagefirm.service.UserAuthenticationService;
-import com.erdemiryigit.brokagefirm.util.OrderMapper;
+import com.erdemiryigit.brokagefirm.specification.CustomerAssetSearchCriteria;
+import com.erdemiryigit.brokagefirm.specification.OrderSearchCriteria;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,11 +36,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
-
-    private final OrderMapper orderMapper;
 
     private final UserAuthenticationService userAuthenticationService;
 
@@ -51,33 +49,40 @@ public class OrderController {
         return ResponseEntity.ok(orderService.createOrder(orderCreateRequest));
     }
 
+    // todo secure for customer with customerId
     @Operation(summary = "Get Orders", description = "Search for orders based on various criteria, customer and date range is mandatory.")
     @GetMapping
-    public ResponseEntity<List<Order>> getOrders(
+    public ResponseEntity<List<OrderGetResponse>> getOrders(
             @RequestParam UUID customerId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime endDate,
             @RequestParam(required = false) String assetName,
             @RequestParam(required = false) Order.OrderSide orderSide,
             @RequestParam(required = false) Order.OrderStatus status,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(required = false) BigDecimal price,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) BigDecimal size,
+            @RequestParam(required = false) BigDecimal minSize,
+            @RequestParam(required = false) BigDecimal maxSize) {
 
         OrderSearchCriteria criteria = OrderSearchCriteria.builder()
                 .customerId(customerId)
                 .assetName(assetName)
                 .orderSide(orderSide)
                 .status(status)
+                .price(price)
                 .minPrice(minPrice)
                 .maxPrice(maxPrice)
                 .size(size)
+                .minSize(minSize)
+                .maxSize(maxSize)
                 .startDate(startDate)
                 .endDate(endDate)
                 .build();
+        log.info("Searching for orders with criteria: {}", criteria);
 
-        List<Order> orders = orderService.searchOrders(criteria);
-
+        List<OrderGetResponse> orders = orderService.searchOrders(criteria);
         if (orders.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
@@ -85,37 +90,38 @@ public class OrderController {
         }
     }
 
+    @PreAuthorize("@userAuthenticationService.isOrderOwner(#orderId)")
     @Operation(summary = "Delete Order", description = "Cancel a PENDING order by ID")
     @DeleteMapping("/{orderId}")
-    public ResponseEntity<OrderDeleteResponse> deleteOrder(@PathVariable UUID orderId) {
-        try {
-            return ResponseEntity.ok(orderService.deleteOrder(orderId));
-        } catch (OrderNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<OrderDeleteResponse> deleteOrder(@PathVariable UUID orderId) throws InterruptedException {
+        return ResponseEntity.ok(orderService.deleteOrder(orderId));
     }
 
+    // todo secure for customer with customerId
     @Operation(summary = "List Customer Assets", description = "List all assets for a given customer with optional filters")
     @GetMapping("/customers/{customerId}/assets")
-    public ResponseEntity<List<CustomerAsset>> getCustomerAssets(
+    public ResponseEntity<List<CustomerAssetGetResponse>> getCustomerAssets(
             @RequestParam UUID customerId,
             @RequestParam(required = false) String ticker,
             @RequestParam(required = false) BigDecimal size,
-            @RequestParam(required = false) BigDecimal usableSize) {
+            @RequestBody(required = false) BigDecimal minSize,
+            @RequestBody(required = false) BigDecimal maxSize,
+            @RequestParam(required = false) BigDecimal usableSize,
+            @RequestParam(required = false) BigDecimal minUsableSize,
+            @RequestParam(required = false) BigDecimal maxUsableSize) {
 
         CustomerAssetSearchCriteria criteria = CustomerAssetSearchCriteria.builder()
                 .customerId(customerId)
-                .size(size)
                 .ticker(ticker)
+                .size(size)
+                .minSize(minSize)
+                .maxSize(maxSize)
                 .usableSize(usableSize)
+                .minUsableSize(minUsableSize)
+                .maxUsableSize(maxUsableSize)
                 .build();
 
-
-        List<CustomerAsset> assets = orderService.searchAssets(criteria);
+        List<CustomerAssetGetResponse> assets = orderService.searchAssets(criteria);
 
         if (assets.isEmpty()) {
             return ResponseEntity.noContent().build();

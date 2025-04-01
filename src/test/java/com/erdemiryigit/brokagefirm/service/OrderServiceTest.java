@@ -9,7 +9,8 @@ import com.erdemiryigit.brokagefirm.entity.Asset;
 import com.erdemiryigit.brokagefirm.entity.Customer;
 import com.erdemiryigit.brokagefirm.entity.CustomerAsset;
 import com.erdemiryigit.brokagefirm.entity.Order;
-import com.erdemiryigit.brokagefirm.exception.CustomerAssetException;
+import com.erdemiryigit.brokagefirm.exception.CustomerAssetInsufficientException;
+import com.erdemiryigit.brokagefirm.exception.CustomerAssetNotFoundException;
 import com.erdemiryigit.brokagefirm.exception.OrderStatusException;
 import com.erdemiryigit.brokagefirm.repository.AssetRepository;
 import com.erdemiryigit.brokagefirm.repository.CustomerAssetRepository;
@@ -17,13 +18,11 @@ import com.erdemiryigit.brokagefirm.repository.CustomerRepository;
 import com.erdemiryigit.brokagefirm.repository.OrderRepository;
 import com.erdemiryigit.brokagefirm.service.impl.OrderServiceImpl;
 import com.erdemiryigit.brokagefirm.util.OrderMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
-
-import org.junit.jupiter.api.Assertions;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -478,7 +477,7 @@ public class OrderServiceTest {
 
     @Rollback(value = false)
     @Test
-    void whenMatchOrderWithNonExistentFundsThenThrowCustomerAssetException() throws InterruptedException {
+    void whenMatchOrderWithNonExistentFundsThenThrowCustomerAssetInsufficientException() throws InterruptedException {
         // Setup assets
         Asset tryAsset = new Asset("TRY", "Turkish Lira");
         Asset teslaAsset = new Asset("TSLA", "Tesla");
@@ -508,7 +507,7 @@ public class OrderServiceTest {
                 .id(finalOrder.getId())
                 .build();
 
-        Assertions.assertThrows(CustomerAssetException.class, () -> orderService.matchOrder(orderMatchRequest));
+        Assertions.assertThrows(CustomerAssetInsufficientException.class, () -> orderService.matchOrder(orderMatchRequest));
     }
 
     @Rollback(value = false)
@@ -553,7 +552,7 @@ public class OrderServiceTest {
                 .id(finalOrder.getId())
                 .build();
 
-        Assertions.assertThrows(CustomerAssetException.class, () -> orderService.matchOrder(orderMatchRequest));
+        Assertions.assertThrows(CustomerAssetNotFoundException.class, () -> orderService.matchOrder(orderMatchRequest));
     }
 
 }

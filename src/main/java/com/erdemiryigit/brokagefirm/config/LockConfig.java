@@ -13,12 +13,12 @@ public class LockConfig {
 
     @Bean
     DefaultLockRepository defaultLockRepository(DataSource dataSource) {
-	return new DefaultLockRepository(dataSource);
+        return new DefaultLockRepository(dataSource);
     }
 
     @Bean
     JdbcLockRegistry jdbcLockRegistry(LockRepository lockRepository) {
-	return new JdbcLockRegistry(lockRepository);
+        return new JdbcLockRegistry(lockRepository);
 
     }
 }

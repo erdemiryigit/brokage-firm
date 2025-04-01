@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @PreAuthorize(
-        "hasAuthority('USER') or hasAuthority('ADMIN')"
+        "hasAuthority('EMPLOYEE') or hasAuthority('ADMIN')"
 )
-
-public @interface IsUser {
+// todo customer ayrilabilir mi?
+public @interface IsAuthorized {
 }

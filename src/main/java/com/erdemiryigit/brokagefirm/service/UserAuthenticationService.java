@@ -2,15 +2,16 @@ package com.erdemiryigit.brokagefirm.service;
 
 import com.erdemiryigit.brokagefirm.entity.Customer;
 import com.erdemiryigit.brokagefirm.entity.Order;
-import com.erdemiryigit.brokagefirm.entity.Role;
 import com.erdemiryigit.brokagefirm.entity.User;
 import com.erdemiryigit.brokagefirm.exception.OrderNotFoundException;
 import com.erdemiryigit.brokagefirm.model.CustomUserDetails;
 import com.erdemiryigit.brokagefirm.repository.OrderRepository;
 import com.erdemiryigit.brokagefirm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -33,7 +34,7 @@ public class UserAuthenticationService implements UserDetailsService {
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
         grantedAuthorities.add(new SimpleGrantedAuthority(user.getRole().getName().name()));
 
-        return new org.springframework.security.core.userdetails.User(user.getUsername(),
+        return new CustomUserDetails(user.getUsername(),
                 user.getPassword(), grantedAuthorities);
     }
 
@@ -46,11 +47,17 @@ public class UserAuthenticationService implements UserDetailsService {
         return loadUserByUsername(customer.getName());
     }
 
-    public boolean isOrderOwner(String username, UUID orderId) {
+    public boolean isOrderOwner(UUID orderId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        String currentUsername = authentication.getName();
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order NOT found"));
+
         return order.getCustomer() != null &&
-                username.equals(order.getCustomer().getName());
+                currentUsername.equals(order.getCustomer().getName());
     }
 
 }

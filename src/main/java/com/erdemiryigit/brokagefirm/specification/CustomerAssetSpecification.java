@@ -30,7 +30,7 @@ public class CustomerAssetSpecification {
                 criteriaBuilder.lessThanOrEqualTo(root.get("size"), size);
     }
 
-    public Specification<CustomerAsset> withSizeEquals(BigDecimal size) {
+    public static Specification<CustomerAsset> withSizeEquals(BigDecimal size) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("size"), size);
     }
@@ -45,8 +45,9 @@ public class CustomerAssetSpecification {
                 criteriaBuilder.lessThanOrEqualTo(root.get("usableSize"), usableSize);
     }
 
-    public Specification<CustomerAsset> withUsableSizeEquals(BigDecimal usableSize) {
+    public static Specification<CustomerAsset> withUsableSizeEquals(BigDecimal usableSize) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("usableSize"), usableSize);
     }
+
 }
