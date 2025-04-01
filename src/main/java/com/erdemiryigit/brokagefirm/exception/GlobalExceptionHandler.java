@@ -1,18 +1,19 @@
 package com.erdemiryigit.brokagefirm.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.net.URI;
 
 // todo loglamaya bak
 
@@ -22,7 +23,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGlobalException(Exception ex) {
         log.error("Exception: {}", ex.getMessage(), ex);
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), "Internal Server Error");
         problemDetail.setTitle("Internal Server Error");
         return problemDetail;
     }
@@ -61,14 +62,14 @@ public class GlobalExceptionHandler {
 
     // 422
     @ExceptionHandler(OrderInterruptedException.class)
-    private ProblemDetail handleOrderInterruptedException(OrderInterruptedException ex) {
+    private ProblemDetail handleOrderInterruptedException() {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "Order was interrupted try again later!");
         problemDetail.setTitle("Order Interrupted");
         return problemDetail;
     }
 
     @ExceptionHandler(OrderStatusException.class)
-    private ProblemDetail handleOrderStatusException(OrderStatusException ex) {
+    private ProblemDetail handleOrderStatusException() {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "Order status is NOT valid!");
         problemDetail.setTitle("Order Status Error");
         return problemDetail;
@@ -98,7 +99,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    private ProblemDetail handleUserNotFoundException(UserNotFoundException ex) {
+    private ProblemDetail handleUserNotFoundException() {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "User does NOT exist!");
         problemDetail.setTitle("User NOT Found");
         return problemDetail;

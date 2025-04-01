@@ -1,5 +1,7 @@
 package com.erdemiryigit.brokagefirm.controller;
 
+import com.erdemiryigit.brokagefirm.config.annotations.IsCustomer;
+import com.erdemiryigit.brokagefirm.config.annotations.IsEmployee;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
@@ -33,6 +35,7 @@ import java.util.UUID;
 
 // todo return response types here instead of domain object
 
+@IsCustomer
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
@@ -41,15 +44,13 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    private final UserAuthenticationService userAuthenticationService;
-
+    @IsEmployee
     @Operation(summary = "Create Order", description = "Create a new order.")
     @PostMapping
     public ResponseEntity<OrderCreateResponse> createOrder(@RequestBody @Valid OrderCreateRequest orderCreateRequest) throws InterruptedException {
         return ResponseEntity.ok(orderService.createOrder(orderCreateRequest));
     }
 
-    // todo secure for customer with customerId
     @Operation(summary = "Get Orders", description = "Search for orders based on various criteria, customer and date range is mandatory.")
     @GetMapping
     public ResponseEntity<List<OrderGetResponse>> getOrders(
@@ -90,18 +91,16 @@ public class OrderController {
         }
     }
 
-    @PreAuthorize("@userAuthenticationService.isOrderOwner(#orderId)")
     @Operation(summary = "Delete Order", description = "Cancel a PENDING order by ID")
     @DeleteMapping("/{orderId}")
     public ResponseEntity<OrderDeleteResponse> deleteOrder(@PathVariable UUID orderId) throws InterruptedException {
         return ResponseEntity.ok(orderService.deleteOrder(orderId));
     }
 
-    // todo secure for customer with customerId
     @Operation(summary = "List Customer Assets", description = "List all assets for a given customer with optional filters")
     @GetMapping("/customers/{customerId}/assets")
     public ResponseEntity<List<CustomerAssetGetResponse>> getCustomerAssets(
-            @RequestParam UUID customerId,
+            @PathVariable UUID customerId,
             @RequestParam(required = false) String ticker,
             @RequestParam(required = false) BigDecimal size,
             @RequestBody(required = false) BigDecimal minSize,

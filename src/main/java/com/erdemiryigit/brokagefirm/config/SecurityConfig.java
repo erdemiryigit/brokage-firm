@@ -3,6 +3,7 @@ package com.erdemiryigit.brokagefirm.config;
 import com.erdemiryigit.brokagefirm.exception.GlobalExceptionHandler;
 import com.erdemiryigit.brokagefirm.service.UserAuthenticationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,11 +21,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
     private final UserAuthenticationService userAuthenticationService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+        log.info("SecurityFilterChain initialized");
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth

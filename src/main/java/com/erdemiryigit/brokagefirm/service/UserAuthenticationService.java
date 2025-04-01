@@ -3,8 +3,10 @@ package com.erdemiryigit.brokagefirm.service;
 import com.erdemiryigit.brokagefirm.entity.Customer;
 import com.erdemiryigit.brokagefirm.entity.Order;
 import com.erdemiryigit.brokagefirm.entity.User;
+import com.erdemiryigit.brokagefirm.exception.CustomerNotFoundException;
 import com.erdemiryigit.brokagefirm.exception.OrderNotFoundException;
 import com.erdemiryigit.brokagefirm.model.CustomUserDetails;
+import com.erdemiryigit.brokagefirm.repository.CustomerRepository;
 import com.erdemiryigit.brokagefirm.repository.OrderRepository;
 import com.erdemiryigit.brokagefirm.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class UserAuthenticationService implements UserDetailsService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final CustomerRepository customerRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -58,6 +61,23 @@ public class UserAuthenticationService implements UserDetailsService {
 
         return order.getCustomer() != null &&
                 currentUsername.equals(order.getCustomer().getName());
+    }
+
+    public boolean isValidCustomer(UUID customerId, UUID orderId) {
+        if (orderId != null) {
+            return isOrderOwner(orderId);
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        String currentUsername = authentication.getName();
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer NOT found"));
+
+        return customer != null &&
+                currentUsername.equals(customer.getName());
     }
 
 }

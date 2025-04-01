@@ -65,10 +65,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDeleteResponse deleteOrder(UUID orderId) throws InterruptedException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        log.info("User {} is trying to delete order with id: {}", username, orderId);
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order with id: " + orderId + " NOT found!"));
 
