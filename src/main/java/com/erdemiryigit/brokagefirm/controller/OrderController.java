@@ -2,7 +2,6 @@ package com.erdemiryigit.brokagefirm.controller;
 
 import com.erdemiryigit.brokagefirm.enums.OrderSide;
 import com.erdemiryigit.brokagefirm.enums.OrderStatus;
-import com.erdemiryigit.brokagefirm.config.annotations.IsCustomer;
 import com.erdemiryigit.brokagefirm.config.annotations.IsEmployee;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
 import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
@@ -13,6 +12,10 @@ import com.erdemiryigit.brokagefirm.service.OrderService;
 import com.erdemiryigit.brokagefirm.specification.CustomerAssetSearchCriteria;
 import com.erdemiryigit.brokagefirm.specification.OrderSearchCriteria;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +37,8 @@ import java.util.UUID;
 
 // todo return response types here instead of domain object
 
-@IsCustomer
+@IsEmployee
+@SecurityRequirement(name = "basicAuth")
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
@@ -43,13 +47,74 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @IsEmployee
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(
+                    mediaType = "application/json",
+                    examples = {
+                            @ExampleObject(
+                                    name = "Buy Order Example",
+                                    summary = "Example of a buy order request",
+                                    value = """
+                                            {
+                                              "customerId": "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6",
+                                              "ticker": "AAPL",
+                                              "orderSide": "BUY",
+                                              "size": 10,
+                                              "price": 150.25
+                                            }
+                                            """
+                            ),
+                            @ExampleObject(
+                                    name = "Sell Order Example",
+                                    summary = "Example of a sell order request",
+                                    value = """
+                                            {
+                                              "customerId": "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6",
+                                              "ticker": "EREGL",
+                                              "orderSide": "SELL",
+                                              "size": 5,
+                                              "price": 300.75
+                                            }
+                                            """
+                            ),
+                            @ExampleObject(
+                                    name = "Insufficient Asset Sell Order Example",
+                                    summary = "Example of a sell order request with insufficient asset",
+                                    value = """
+                                            {
+                                              "customerId": "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6",
+                                              "ticker": "EREGL",
+                                              "orderSide": "SELL",
+                                              "size": 999,
+                                              "price": 300.75
+                                            }
+                                            """
+                            ),
+                            @ExampleObject(
+                                    name = "Insufficient Funds Buy Order Example",
+                                    summary = "Example of a buy order request with insufficient funds",
+                                    value = """
+                                            {
+                                              "customerId": "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6",
+                                              "ticker": "EREGL",
+                                              "orderSide": "BUY",
+                                              "size": 999,
+                                              "price": 999.75
+                                            }
+                                            """
+                            )
+                    }
+            )
+    )
     @Operation(summary = "Create Order", description = "Create a new order.")
     @PostMapping
     public ResponseEntity<OrderCreateResponse> createOrder(@RequestBody @Valid OrderCreateRequest orderCreateRequest) throws InterruptedException {
         return ResponseEntity.ok(orderService.createOrder(orderCreateRequest));
     }
 
+    @Parameter(name = "customerId", example = "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6")
+    @Parameter(name = "startDate", example = "2025-01-01T00:00:00")
+    @Parameter(name = "endDate", example = "2025-12-31T23:59:59")
     @Operation(summary = "Get Orders", description = "Search for orders based on various criteria, customer and date range is mandatory.")
     @GetMapping
     public ResponseEntity<List<OrderGetResponse>> getOrders(
@@ -90,20 +155,37 @@ public class OrderController {
         }
     }
 
+    @Parameter(
+            name = "orderId",
+            description = "Order ID's to be deleted",
+            examples = {
+                    @ExampleObject(
+                            name = "PENDING Order",
+                            summary = "A PENDING order that can be cancelled",
+                            value = "f4f5f6f7-a4a5-b4b5-c4c5-d4d5d6d7d8d9"
+                    ),
+                    @ExampleObject(
+                            name = "CANCELLED Order",
+                            summary = "A CANCELLED order that can NOT be cancelled",
+                            value = "d4d5d6d7-e4e5-f4f5-a4a5-b4b5b6b7b8b9"
+                    )
+            }
+    )
     @Operation(summary = "Delete Order", description = "Cancel a PENDING order by ID")
     @DeleteMapping("/{orderId}")
     public ResponseEntity<OrderDeleteResponse> deleteOrder(@PathVariable UUID orderId) throws InterruptedException {
         return ResponseEntity.ok(orderService.deleteOrder(orderId));
     }
 
+    @Parameter(name = "customerId", example = "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6")
     @Operation(summary = "List Customer Assets", description = "List all assets for a given customer with optional filters")
     @GetMapping("/customers/{customerId}/assets")
     public ResponseEntity<List<CustomerAssetGetResponse>> getCustomerAssets(
             @PathVariable UUID customerId,
             @RequestParam(required = false) String ticker,
             @RequestParam(required = false) BigDecimal size,
-            @RequestBody(required = false) BigDecimal minSize,
-            @RequestBody(required = false) BigDecimal maxSize,
+            @RequestParam(required = false) BigDecimal minSize,
+            @RequestParam(required = false) BigDecimal maxSize,
             @RequestParam(required = false) BigDecimal usableSize,
             @RequestParam(required = false) BigDecimal minUsableSize,
             @RequestParam(required = false) BigDecimal maxUsableSize) {
@@ -128,5 +210,12 @@ public class OrderController {
         }
     }
 
+    @Parameter(name = "orderId", example = "a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9")
+    @Operation(summary = "Get Order by ID", description = "Retrieve a specific order by its ID")
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderGetResponse> getOrderById(@PathVariable UUID orderId) {
+        OrderGetResponse order = orderService.getOrderById(orderId);
+        return ResponseEntity.ok(order);
+    }
 
 }

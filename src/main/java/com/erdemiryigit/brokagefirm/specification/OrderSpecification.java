@@ -32,8 +32,16 @@ public class OrderSpecification {
     }
 
     public static Specification<Order> withCreateDateBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return (root, query, criteriaBuilder) ->
-                criteriaBuilder.between(root.get("createDate"), startDate, endDate);
+        return (root, query, cb) -> {
+            if (startDate == null && endDate == null) {
+                return cb.conjunction(); //
+            }
+
+            LocalDateTime start = startDate != null ? startDate : LocalDateTime.of(1970, 1, 1, 0, 0);
+            LocalDateTime end = endDate != null ? endDate : LocalDateTime.now().plusYears(100);
+
+            return cb.between(root.get("createDate"), start, end);
+        };
     }
 
     public static Specification<Order> withPriceGreaterThan(BigDecimal price) {

@@ -13,7 +13,7 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public abstract class CustomerAssetMapper {
 
-    @Mapping(target = "customerName", source = "customer.name")
+    @Mapping(target = "customerName", source = "customer.username")
     @Mapping(target = "ticker", source = "asset.ticker")
     @Mapping(target = "description", source = "asset.description")
     public abstract CustomerAssetGetResponse toCustomerAssetGetResponse(CustomerAsset customerAsset);

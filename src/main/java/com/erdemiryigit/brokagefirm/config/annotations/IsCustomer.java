@@ -9,10 +9,6 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("     hasAuthority('EMPLOYEE') " +
-                "or hasAuthority('ADMIN') " +
-                "or @userAuthenticationService.isValidCustomer(#customerId, #orderId)"
-)
-// todo customer ayrilabilir mi?
+@PreAuthorize("hasRole('CUSTOMER')")
 public @interface IsCustomer {
 }

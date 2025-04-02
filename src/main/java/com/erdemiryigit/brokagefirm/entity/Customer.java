@@ -1,32 +1,32 @@
 package com.erdemiryigit.brokagefirm.entity;
 
-import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.UUID;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "customers")
-@Data
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Customer {
+@Data
+@DiscriminatorValue("CUSTOMER")
+public class Customer extends User {
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
+    private Set<CustomerAsset> assets = new HashSet<>();
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
-    private UUID id;
-
-    @Column(nullable = false)
-    private String name;
-
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+        return authorities;
+    }
 }

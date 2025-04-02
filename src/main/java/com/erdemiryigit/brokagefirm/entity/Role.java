@@ -14,8 +14,6 @@ import lombok.Data;
 import java.util.List;
 import java.util.UUID;
 
-// todo match endpointine isadmin koy,
-
 @Entity
 @Table(name = "roles")
 @Data
@@ -23,9 +21,9 @@ public class Role {
 
     public enum RoleName {
         EMPLOYEE,
-        ADMIN,
-        CUSTOMER
+        ADMIN
     }
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(columnDefinition = "uuid", updatable = false, nullable = false)
@@ -35,5 +33,5 @@ public class Role {
     private RoleName name;
 
     @OneToMany(mappedBy = "role")
-    private List<User> user;
+    private List<Staff> user;
 }

@@ -1,6 +1,5 @@
 package com.erdemiryigit.brokagefirm.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -12,8 +11,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import java.net.URI;
 
 // todo loglamaya bak
 
@@ -31,7 +28,7 @@ public class GlobalExceptionHandler {
     // 401
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
     private ProblemDetail handleAuthenticationCredentialsNotFoundException(AuthenticationCredentialsNotFoundException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), "Authentication credentials NOT found");
         problemDetail.setTitle("Authentication Credentials Not Found");
         return problemDetail;
     }
@@ -39,15 +36,15 @@ public class GlobalExceptionHandler {
     // 403
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDeniedException(AccessDeniedException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), "Access Denied");
         problemDetail.setTitle("Access Denied");
         return problemDetail;
     }
 
     // 500
     @ExceptionHandler(InterruptedException.class)
-    private ProblemDetail handleInterruptedException(InterruptedException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
+    private ProblemDetail handleInterruptedException() {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), "Internal Server Error");
         problemDetail.setTitle("Interrupted Exception");
         return problemDetail;
     }
@@ -55,7 +52,7 @@ public class GlobalExceptionHandler {
     // 404
     @ExceptionHandler(NoResourceFoundException.class)
     private ProblemDetail handleNoResourceFoundException(NoResourceFoundException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), "Resource NOT found");
         problemDetail.setTitle("Resource Not Found");
         return problemDetail;
     }
@@ -98,14 +95,6 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    private ProblemDetail handleUserNotFoundException() {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), "User does NOT exist!");
-        problemDetail.setTitle("User NOT Found");
-        return problemDetail;
-    }
-
-
     @ExceptionHandler(CustomerNotFoundException.class)
     private ProblemDetail handleCustomerNotFound() {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), "Customer does NOT exist!");
@@ -115,21 +104,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     private ProblemDetail handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), "Missing request parameter: " + ex.getParameterName());
         problemDetail.setTitle("Missing Servlet Request Parameter");
         return problemDetail;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     private ProblemDetail handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), "Malformed JSON request");
         problemDetail.setTitle("Bad Request");
         return problemDetail;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     private ProblemDetail handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), ex.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), "Validation error");
         problemDetail.setTitle("Validation Error");
         return problemDetail;
     }

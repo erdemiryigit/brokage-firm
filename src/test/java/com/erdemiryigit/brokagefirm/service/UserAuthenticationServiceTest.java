@@ -1,103 +1,107 @@
 package com.erdemiryigit.brokagefirm.service;
 
-import com.erdemiryigit.brokagefirm.enums.OrderSide;
-import com.erdemiryigit.brokagefirm.enums.OrderStatus;
-import com.erdemiryigit.brokagefirm.entity.Customer;
-import com.erdemiryigit.brokagefirm.entity.Order;
-import com.erdemiryigit.brokagefirm.entity.User;
+import com.erdemiryigit.brokagefirm.controller.AdminController;
+import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
+import com.erdemiryigit.brokagefirm.dto.response.OrderResponseStatus;
 import com.erdemiryigit.brokagefirm.exception.OrderNotFoundException;
-import com.erdemiryigit.brokagefirm.model.CustomUserDetails;
-import com.erdemiryigit.brokagefirm.repository.CustomerRepository;
-import com.erdemiryigit.brokagefirm.repository.OrderRepository;
-import com.erdemiryigit.brokagefirm.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.when;
-
+@Transactional
 @SpringBootTest
 class UserAuthenticationServiceTest {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CustomerRepository customerRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
     @Autowired
     private UserAuthenticationService userAuthenticationService;
 
+    @Autowired
+    private AdminController adminController;
+
     @Test
-    void loadUserByOrderId_whenOrderExistsAndCustomerExists_shouldReturnUserDetails() {
-        String username = "testuser";
-
-        Customer customer = new Customer();
-        customer.setName(username);
-        customerRepository.save(customer);
-
-        Order order = new Order();
-        order.setCustomer(customer);
-        order.setOrderSide(OrderSide.BUY);
-        order.setSize(BigDecimal.valueOf(10));
-        order.setPrice(BigDecimal.valueOf(100));
-        order.setStatus(OrderStatus.PENDING);
-        order.setCreateDate(java.time.LocalDateTime.now());
-        order = orderRepository.save(order);
-
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword("password");
-        userRepository.save(user);
-
-        CustomUserDetails userDetails = (CustomUserDetails) userAuthenticationService.loadUserByOrderId(order.getId());
-
-        Assertions.assertEquals(user.getUsername(), userDetails.getUsername());
+    void whenLoadUserByValidUsernameThenReturnUser() {
+        String username = "customer1";
+        Assertions.assertEquals(username, userAuthenticationService.loadUserByUsername(username).getUsername());
     }
 
     @Test
-    void loadUserByOrderId_whenOrderDoesNotExist_shouldThrowOrderNotFoundException() {
-        UUID orderId = UUID.fromString("");
+    void whenLoadUserByInvalidUsernameThenThrowUsernameNotFoundException() {
+        String username = "nonexistentuser";
+        Assertions.assertThrows(UsernameNotFoundException.class, () -> userAuthenticationService.loadUserByUsername(username));
+    }
 
-        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+    @WithMockUser(username = "customer1")
+    @Test
+    void whenIsOrderOwnerThenReturnTrue() {
+        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+        Assertions.assertTrue(userAuthenticationService.isOrderOwner(orderId));
+    }
 
-        Assertions.assertThrows(OrderNotFoundException.class, () -> userAuthenticationService.loadUserByOrderId(orderId));
+    @WithMockUser(username = "customer2")
+    @Test
+    void whenIsNotOrderOwnerThenReturnFalse() {
+        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+        Assertions.assertFalse(userAuthenticationService.isOrderOwner(orderId));
     }
 
     @Test
-    void loadUserByOrderId_whenCustomerDoesNotExist_shouldThrowUsernameNotFoundException() {
-        UUID orderId = UUID.fromString("");
-
-        Order order = new Order();
-        order.setId(orderId);
-        order.setCustomer(null);
-
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-
-        Assertions.assertThrows(UsernameNotFoundException.class, () -> userAuthenticationService.loadUserByOrderId(orderId));
+    void whenGetCustomerIdByValidUsernameThenReturnId() {
+        String username = "customer1";
+        UUID expectedId = UUID.fromString("a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6"); // Replace with actual ID
+        Assertions.assertEquals(expectedId, userAuthenticationService.getCustomerIdByUsername(username));
     }
 
     @Test
-    void loadUserByOrderId_whenUserDoesNotExist_shouldThrowUsernameNotFoundException() {
-        UUID orderId = UUID.fromString("");
-        String username = "testuser";
+    void whenGetCustomerIdByInvalidUsernameThenThrowUsernameNotFoundException() {
+        String username = "nonexistentuser";
+        Assertions.assertThrows(UsernameNotFoundException.class,
+                () -> userAuthenticationService.getCustomerIdByUsername(username));
+    }
 
-        Customer customer = new Customer();
-        customer.setName(username);
+    @WithMockUser(username = "customer1")
+    @Test
+    void whenIsOrderOwnerWithNonExistentOrderThenThrowOrderNotFoundException() {
+        UUID nonExistentOrderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e5");
+        Assertions.assertThrows(OrderNotFoundException.class,
+                () -> userAuthenticationService.isOrderOwner(nonExistentOrderId));
+    }
 
-        Order order = new Order();
-        order.setId(orderId);
-        order.setCustomer(customer);
+    @Test
+    void whenIsOrderOwnerWithNullAuthenticationThenReturnFalse() {
+        SecurityContextHolder.clearContext(); // Clear authentication
+        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+        Assertions.assertFalse(userAuthenticationService.isOrderOwner(orderId));
+    }
 
-        Assertions.assertThrows(UsernameNotFoundException.class, () -> userAuthenticationService.loadUserByOrderId(orderId));
+    @Rollback
+    @WithMockUser(authorities = "ADMIN")
+    @Test
+    void whenMatchOrderWithAdminRoleThenReturnSuccessful() {
+        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+        ResponseEntity<OrderMatchResponse> response = adminController.matchOrder(orderId);
+        Assertions.assertEquals(OrderResponseStatus.SUCCESSFUL, response.getBody().orderResponseStatus());
+    }
+
+    @WithMockUser(authorities = "EMPLOYEE")
+    @Test
+    void whenMatchOrderWithEmployeeRoleThenThrow() {
+        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+        Assertions.assertThrows(AuthorizationDeniedException.class, () -> adminController.matchOrder(orderId));
+    }
+
+    @WithMockUser(authorities = "CUSTOMER")
+    @Test
+    void whenMatchOrderWithCustomerRoleThenThrow() {
+        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+        Assertions.assertThrows(AuthorizationDeniedException.class, () -> adminController.matchOrder(orderId));
     }
 }

@@ -4,10 +4,11 @@ import com.erdemiryigit.brokagefirm.dto.response.CustomerAssetGetResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderGetResponse;
 import com.erdemiryigit.brokagefirm.enums.OrderSide;
 import com.erdemiryigit.brokagefirm.enums.OrderStatus;
+import com.erdemiryigit.brokagefirm.exception.OrderSideUnknownException;
+import com.erdemiryigit.brokagefirm.repository.UserRepository;
 import com.erdemiryigit.brokagefirm.specification.CustomerAssetSearchCriteria;
 import com.erdemiryigit.brokagefirm.specification.OrderSearchCriteria;
 import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
-import com.erdemiryigit.brokagefirm.dto.request.OrderMatchRequest;
 import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderDeleteResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
@@ -24,7 +25,6 @@ import com.erdemiryigit.brokagefirm.exception.OrderNotFoundException;
 import com.erdemiryigit.brokagefirm.exception.OrderStatusException;
 import com.erdemiryigit.brokagefirm.repository.AssetRepository;
 import com.erdemiryigit.brokagefirm.repository.CustomerAssetRepository;
-import com.erdemiryigit.brokagefirm.repository.CustomerRepository;
 import com.erdemiryigit.brokagefirm.repository.OrderRepository;
 import com.erdemiryigit.brokagefirm.service.OrderService;
 import com.erdemiryigit.brokagefirm.specification.CustomerAssetSpecification;
@@ -53,7 +53,7 @@ import java.util.concurrent.locks.Lock;
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final AssetRepository assetRepository;
-    private final CustomerRepository customerRepository;
+    private final UserRepository userRepository;
     private final CustomerAssetRepository customerAssetRepository;
 
     private final LockRegistry lockRegistry;
@@ -63,8 +63,18 @@ public class OrderServiceImpl implements OrderService {
     private final CustomerAssetMapper customerAssetMapper;
 
     @Override
+    @Transactional(readOnly = true)
+    public OrderGetResponse getOrderById(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order with id: " + orderId + " NOT found!"));
+
+        return orderMapper.toOrderGetResponse(order);
+    }
+
+    @Override
     @Transactional
     public OrderDeleteResponse deleteOrder(UUID orderId) throws InterruptedException {
+        Order finalOrder;
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order with id: " + orderId + " NOT found!"));
 
@@ -74,58 +84,47 @@ public class OrderServiceImpl implements OrderService {
 
         Asset tryAsset = assetRepository.findById(TRY).orElseThrow(() -> new AssetNotFoundException("Asset " + TRY + " NOT found!"));
 
+        CustomerAsset customerAsset;
+        String customerAssetTicker;
+        BigDecimal amountToReturn;
         if (OrderSide.BUY == order.getOrderSide()) {
             // For BUY orders, return money to TRY balance
-            CustomerAsset customerFunds = customerAssetRepository.findByCustomerIdAndAssetTicker(
-                            order.getCustomer().getId(), tryAsset.getTicker())
-                    .orElseThrow(() -> new CustomerAssetNotFoundException("Customer with id: " + order.getCustomer().getId() + " funds NOT found!"));
-
-            Lock customerAssetLock = lockRegistry.obtain(String.valueOf(customerFunds.getId()));
-            try {
-                if (!customerAssetLock.tryLock(10, TimeUnit.SECONDS)) {
-                    throw new OrderInterruptedException("Can't cancel your order please try again later!");
-                }
-
-                // Add back the total cost (price * size)
-                BigDecimal amountToReturn = order.getPrice().multiply(order.getSize());
-                customerFunds.setUsableSize(customerFunds.getUsableSize().add(amountToReturn));
-
-                customerAssetRepository.save(customerFunds);
-                order.setStatus(OrderStatus.CANCELLED);
-            } finally {
-                customerAssetLock.unlock();
-            }
+            customerAssetTicker = TRY;
+            amountToReturn = order.getPrice().multiply(order.getSize());
         } else if (OrderSide.SELL == order.getOrderSide()) {
-            // For SELL orders, return asset quantity
-            CustomerAsset customerAsset = customerAssetRepository.findByCustomerIdAndAssetTicker(
-                            order.getCustomer().getId(), order.getAsset().getTicker())
-                    .orElseThrow(() -> new CustomerAssetNotFoundException(
-                            "Customer asset " + order.getAsset().getTicker() +
-                                    " NOT found for customer id: " + order.getCustomer().getId()));
+            customerAssetTicker = order.getAsset().getTicker();
+            amountToReturn = order.getSize();
+        } else {
+            throw new OrderSideUnknownException("Unknown order side: " + order.getOrderSide());
+        }
+        customerAsset = customerAssetRepository.findByCustomerIdAndAssetTicker(
+                        order.getCustomer().getId(), customerAssetTicker)
+                .orElseThrow(() -> new CustomerAssetNotFoundException("Customer with id: " + order.getCustomer().getId() + " asset with ticker:" + customerAssetTicker + " NOT found!"));
 
-            Lock customerAssetLock = lockRegistry.obtain(String.valueOf(customerAsset.getId()));
-            try {
-                if (!customerAssetLock.tryLock(10, TimeUnit.SECONDS)) {
-                    throw new OrderInterruptedException("Can't cancel your order please try again later!");
-                }
-
-                // Add back the size
-                customerAsset.setUsableSize(customerAsset.getUsableSize().add(order.getSize()));
-
-                customerAssetRepository.save(customerAsset);
-                order.setStatus(OrderStatus.CANCELLED);
-            } finally {
-                customerAssetLock.unlock();
+        Lock customerAssetLock = lockRegistry.obtain(String.valueOf(customerAsset.getId()));
+        try {
+            if (!customerAssetLock.tryLock(10, TimeUnit.SECONDS)) {
+                throw new OrderInterruptedException("Can't cancel your order please try again later!");
             }
+
+            // Add back the total cost (price * size)
+            customerAsset.setUsableSize(customerAsset.getUsableSize().add(amountToReturn));
+
+            customerAssetRepository.save(customerAsset);
+            order.setStatus(OrderStatus.CANCELLED);
+            finalOrder = orderRepository.save(order);
+        } finally {
+            customerAssetLock.unlock();
         }
 
-        return orderMapper.toOrderDeleteResponse(order);
+        return orderMapper.toOrderDeleteResponse(finalOrder);
     }
 
     @Override
     @Transactional
     // todo createorderresponse return komple trya all catchte responseun statusunu failure don
     public OrderCreateResponse createOrder(OrderCreateRequest orderCreateRequest) throws InterruptedException {
+        Order finalOrder;
         Asset tryAsset = assetRepository.findById(TRY).orElseThrow(() -> new AssetNotFoundException("Asset " + TRY + " NOT found!"));
 
         Asset asset = assetRepository.findById(orderCreateRequest.ticker())
@@ -133,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderSide orderSide = orderCreateRequest.orderSide();
 
-        Customer customer = customerRepository.findById(orderCreateRequest.customerId())
+        Customer customer = (Customer) userRepository.findById(orderCreateRequest.customerId())
                 .orElseThrow(() -> new CustomerNotFoundException("Customer with id:" + orderCreateRequest.customerId() + " NOT found!"));
 
         if (OrderSide.BUY == orderSide) {
@@ -158,6 +157,16 @@ public class OrderServiceImpl implements OrderService {
                 customerFunds.setUsableSize(customerFunds.getUsableSize().subtract(amount));
 
                 customerAssetRepository.save(customerFunds);
+
+                finalOrder = orderRepository.save(Order.builder()
+                        .customer(customer)
+                        .asset(asset)
+                        .orderSide(orderCreateRequest.orderSide())
+                        .size(orderCreateRequest.size())
+                        .price(orderCreateRequest.price())
+                        .status(OrderStatus.PENDING) // Orders should be created with PENDING status.
+                        .createDate(LocalDateTime.now())
+                        .build());
             } finally {
                 customerAssetLock.unlock();
             }
@@ -186,38 +195,40 @@ public class OrderServiceImpl implements OrderService {
                 customerAsset.setUsableSize(customerAsset.getUsableSize().subtract(size));
                 customerAssetRepository.save(customerAsset);
 
+                finalOrder = orderRepository.save(Order.builder()
+                        .customer(customer)
+                        .asset(asset)
+                        .orderSide(orderCreateRequest.orderSide())
+                        .size(orderCreateRequest.size())
+                        .price(orderCreateRequest.price())
+                        .status(OrderStatus.PENDING) // Orders should be created with PENDING status.
+                        .createDate(LocalDateTime.now())
+                        .build());
+
             } finally {
                 customerAssetLock.unlock();
             }
+        } else {
+            throw new OrderSideUnknownException("Unknown order side: " + orderCreateRequest.orderSide());
         }
 
-        Order order = orderRepository.save(Order.builder()
-                .customer(customer)
-                .asset(asset)
-                .orderSide(orderCreateRequest.orderSide())
-                .size(orderCreateRequest.size())
-                .price(orderCreateRequest.price())
-                .status(OrderStatus.PENDING) // Orders should be created with PENDING status.
-                .createDate(LocalDateTime.now())
-                .build());
-
-        return orderMapper.toOrderCreateResponse(order);
+        return orderMapper.toOrderCreateResponse(finalOrder);
     }
 
     @Override
-    public OrderMatchResponse matchOrder(OrderMatchRequest orderMatchRequest) throws InterruptedException {
-        Order order = orderRepository.findById(orderMatchRequest.id()).orElseThrow(() -> new OrderNotFoundException("Order to be matched NOT found!"));
+    public OrderMatchResponse matchOrder(UUID orderId) throws InterruptedException {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("Order to be matched NOT found!"));
 
         if (!order.getStatus().equals(OrderStatus.PENDING)) {
             throw new OrderStatusException(
-                    "Order to be matched has to be in PENDING status! Order with id " + orderMatchRequest.id() + " status is " + order.getStatus());
+                    "Order to be matched has to be in PENDING status! Order with id " + orderId + " status is " + order.getStatus());
         }
 
         Asset tryAsset = assetRepository.findById(TRY).get();
         Asset stockAsset = assetRepository.findById(order.getAsset().getTicker())
                 .orElseThrow(() -> new AssetNotFoundException("Asset with id:" + order.getAsset().getTicker() + " NOT found!"));
 
-        Customer customer = customerRepository.findById(order.getCustomer().getId())
+        Customer customer = (Customer) userRepository.findById(order.getCustomer().getId())
                 .orElseThrow(() -> new CustomerNotFoundException("Customer with id:" + order.getCustomer().getId() + " NOT found!"));
 
         OrderSide orderSide = order.getOrderSide();
@@ -254,9 +265,6 @@ public class OrderServiceImpl implements OrderService {
 
         try {
             if (!lock1.tryLock(10, TimeUnit.SECONDS) || !lock2.tryLock(10, TimeUnit.SECONDS)) {
-                if (lock1.tryLock(0, TimeUnit.SECONDS)) {
-                    lock1.unlock();
-                }
                 throw new OrderInterruptedException("Can't process your order please try again later!");
             }
 
@@ -265,10 +273,12 @@ public class OrderServiceImpl implements OrderService {
                 customerFunds.setSize(customerFunds.getSize().subtract(orderAmount)); // aliyorken fundstan cikartiyoruz assete ekliyoruz
                 customerAsset.setSize(customerAsset.getSize().add(order.getSize()));
                 customerAsset.setUsableSize(customerAsset.getUsableSize().add(order.getSize())); // usable size da artmali
-            } else {
+            } else if (orderSide == OrderSide.SELL) {
                 customerFunds.setSize(customerFunds.getSize().add(orderAmount)); // satiyorken fundsa ekliyoruz assetten cikartiyoruz
-                customerFunds.setUsableSize(customerFunds.getUsableSize().add(orderAmount)); // usable size da artmali
                 customerAsset.setSize(customerAsset.getSize().subtract(order.getSize()));
+                customerFunds.setUsableSize(customerFunds.getUsableSize().add(orderAmount)); // usable size da artmali
+            } else {
+                throw new OrderSideUnknownException("Unknown order side: " + order.getOrderSide());
             }
 
             customerAssetRepository.save(customerFunds);
@@ -306,8 +316,9 @@ public class OrderServiceImpl implements OrderService {
             spec = spec.and(OrderSpecification.withStatus(criteria.getStatus()));
         }
 
-        spec = spec.and(OrderSpecification.withCreateDateBetween(criteria.getStartDate(), criteria.getEndDate()));
-
+        if (criteria.getStartDate() != null || criteria.getEndDate() != null) {
+            spec = spec.and(OrderSpecification.withCreateDateBetween(criteria.getStartDate(), criteria.getEndDate()));
+        }
         if (criteria.getPrice() != null) {
             spec = spec.and(OrderSpecification.withPriceEquals(criteria.getPrice()));
         }
