@@ -22,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,7 +44,6 @@ public class CustomerController {
     private final UserAuthenticationService userAuthenticationService;
 
     @IsOwner
-    @Parameter(name = "orderId", example = "a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9")
     @Operation(summary = "Get Order by ID", description = "Retrieve a specific order by its ID")
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<OrderGetResponse> getOrderById(@PathVariable UUID orderId) {
@@ -53,9 +51,6 @@ public class CustomerController {
         return ResponseEntity.ok(order);
     }
 
-    @Parameter(name = "customerId", example = "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6")
-    @Parameter(name = "startDate", example = "2025-01-01T00:00:00")
-    @Parameter(name = "endDate", example = "2025-12-31T23:59:59")
     @Operation(summary = "Get Orders", description = "Search for orders based on various criteria.")
     @GetMapping("/orders")
     public ResponseEntity<List<OrderGetResponse>> getOrders(
@@ -98,7 +93,6 @@ public class CustomerController {
         }
     }
 
-    @Parameter(name = "orderId", example = "a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9")
     @IsOwner
     @Operation(summary = "Delete Order", description = "Cancel your PENDING order by ID")
     @DeleteMapping("/orders/{orderId}")

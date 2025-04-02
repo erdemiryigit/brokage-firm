@@ -1,9 +1,17 @@
 package com.erdemiryigit.brokagefirm.service;
 
 import com.erdemiryigit.brokagefirm.controller.AdminController;
+import com.erdemiryigit.brokagefirm.dto.request.OrderCreateRequest;
+import com.erdemiryigit.brokagefirm.dto.response.OrderCreateResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
 import com.erdemiryigit.brokagefirm.dto.response.OrderResponseStatus;
+import com.erdemiryigit.brokagefirm.entity.Asset;
+import com.erdemiryigit.brokagefirm.entity.Customer;
+import com.erdemiryigit.brokagefirm.entity.CustomerAsset;
+import com.erdemiryigit.brokagefirm.enums.OrderSide;
 import com.erdemiryigit.brokagefirm.exception.OrderNotFoundException;
+import com.erdemiryigit.brokagefirm.repository.CustomerAssetRepository;
+import com.erdemiryigit.brokagefirm.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Transactional
@@ -25,11 +34,23 @@ class UserAuthenticationServiceTest {
     private UserAuthenticationService userAuthenticationService;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private AdminController adminController;
+
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private CustomerAssetRepository customerAssetRepository;
 
     @Test
     void whenLoadUserByValidUsernameThenReturnUser() {
-        String username = "customer1";
+        String username = "testcustomer";
+        Customer customer = new Customer();
+        customer.setUsername(username);
+        customer.setPassword("testcustomer");
+        userRepository.save(customer);
         Assertions.assertEquals(username, userAuthenticationService.loadUserByUsername(username).getUsername());
     }
 
@@ -41,23 +62,78 @@ class UserAuthenticationServiceTest {
 
     @WithMockUser(username = "customer1")
     @Test
-    void whenIsOrderOwnerThenReturnTrue() {
-        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+    void whenIsOrderOwnerThenReturnTrue() throws InterruptedException {
+        Customer customer = new Customer();
+        customer.setUsername("customer1");
+        customer.setPassword("customer1");
+        userRepository.save(customer);
+
+        Asset asset = new Asset();
+        asset.setTicker("TRY");
+
+        CustomerAsset customerAsset = new CustomerAsset();
+        customerAsset.setCustomer(customer);
+        customerAsset.setAsset(asset);
+        customerAsset.setUsableSize(BigDecimal.valueOf(5000));
+        customerAsset.setSize(BigDecimal.valueOf(5000));
+        customerAssetRepository.save(customerAsset);
+
+        OrderCreateRequest createOrderRequest = new OrderCreateRequest(
+                customer.getId(),
+                "AAPL",
+                OrderSide.BUY,
+                BigDecimal.valueOf(10),
+                BigDecimal.valueOf(150)
+        );
+
+        OrderCreateResponse orderCreateResponse = orderService.createOrder(createOrderRequest);
+
+        UUID orderId = orderCreateResponse.id();
         Assertions.assertTrue(userAuthenticationService.isOrderOwner(orderId));
     }
 
     @WithMockUser(username = "customer2")
     @Test
-    void whenIsNotOrderOwnerThenReturnFalse() {
-        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+    void whenIsNotOrderOwnerThenReturnFalse() throws InterruptedException {
+        Customer customer = new Customer();
+        customer.setUsername("customer1");
+        customer.setPassword("customer1");
+        userRepository.save(customer);
+
+        Asset asset = new Asset();
+        asset.setTicker("TRY");
+
+        CustomerAsset customerAsset = new CustomerAsset();
+        customerAsset.setCustomer(customer);
+        customerAsset.setAsset(asset);
+        customerAsset.setUsableSize(BigDecimal.valueOf(5000));
+        customerAsset.setSize(BigDecimal.valueOf(5000));
+        customerAssetRepository.save(customerAsset);
+
+        OrderCreateRequest createOrderRequest = new OrderCreateRequest(
+                customer.getId(),
+                "AAPL",
+                OrderSide.BUY,
+                BigDecimal.valueOf(10),
+                BigDecimal.valueOf(150)
+        );
+
+        OrderCreateResponse orderCreateResponse = orderService.createOrder(createOrderRequest);
+
+        UUID orderId = orderCreateResponse.id();
         Assertions.assertFalse(userAuthenticationService.isOrderOwner(orderId));
     }
 
+    @WithMockUser(username = "testcustomer")
     @Test
     void whenGetCustomerIdByValidUsernameThenReturnId() {
-        String username = "customer1";
-        UUID expectedId = UUID.fromString("a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6"); // Replace with actual ID
-        Assertions.assertEquals(expectedId, userAuthenticationService.getCustomerIdByUsername(username));
+        String username = "testcustomer";
+        Customer customer = new Customer();
+        customer.setUsername(username);
+        customer.setPassword("testcustomer");
+        customer = userRepository.save(customer);
+
+        Assertions.assertEquals(customer.getId(), userAuthenticationService.getCustomerIdByUsername(username));
     }
 
     @Test
@@ -85,8 +161,29 @@ class UserAuthenticationServiceTest {
     @Rollback
     @WithMockUser(authorities = "ADMIN")
     @Test
-    void whenMatchOrderWithAdminRoleThenReturnSuccessful() {
-        UUID orderId = UUID.fromString("a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9");
+    void whenMatchOrderWithAdminRoleThenReturnSuccessful() throws InterruptedException {
+        Customer customer = new Customer();
+        customer.setUsername("customer1");
+        customer.setPassword("customer1");
+        userRepository.save(customer);
+        Asset asset = new Asset();
+        asset.setTicker("TRY");
+        CustomerAsset customerAsset = new CustomerAsset();
+        customerAsset.setCustomer(customer);
+        customerAsset.setAsset(asset);
+        customerAsset.setUsableSize(BigDecimal.valueOf(5000));
+        customerAsset.setSize(BigDecimal.valueOf(5000));
+        customerAssetRepository.save(customerAsset);
+
+        OrderCreateRequest createOrderRequest = new OrderCreateRequest(
+                customer.getId(),
+                "AAPL",
+                OrderSide.BUY,
+                BigDecimal.valueOf(10),
+                BigDecimal.valueOf(150)
+        );
+        OrderCreateResponse orderCreateResponse = orderService.createOrder(createOrderRequest);
+        UUID orderId = orderCreateResponse.id();
         ResponseEntity<OrderMatchResponse> response = adminController.matchOrder(orderId);
         Assertions.assertEquals(OrderResponseStatus.SUCCESSFUL, response.getBody().orderResponseStatus());
     }

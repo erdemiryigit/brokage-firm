@@ -158,18 +158,13 @@ public class OrderController {
     @Parameter(
             name = "orderId",
             description = "Order ID's to be deleted",
-            examples = {
-                    @ExampleObject(
-                            name = "PENDING Order",
-                            summary = "A PENDING order that can be cancelled",
-                            value = "f4f5f6f7-a4a5-b4b5-c4c5-d4d5d6d7d8d9"
-                    ),
+            examples =
                     @ExampleObject(
                             name = "CANCELLED Order",
                             summary = "A CANCELLED order that can NOT be cancelled",
                             value = "d4d5d6d7-e4e5-f4f5-a4a5-b4b5b6b7b8b9"
                     )
-            }
+
     )
     @Operation(summary = "Delete Order", description = "Cancel a PENDING order by ID")
     @DeleteMapping("/{orderId}")
@@ -177,7 +172,6 @@ public class OrderController {
         return ResponseEntity.ok(orderService.deleteOrder(orderId));
     }
 
-    @Parameter(name = "customerId", example = "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6")
     @Operation(summary = "List Customer Assets", description = "List all assets for a given customer with optional filters")
     @GetMapping("/customers/{customerId}/assets")
     public ResponseEntity<List<CustomerAssetGetResponse>> getCustomerAssets(
@@ -210,7 +204,6 @@ public class OrderController {
         }
     }
 
-    @Parameter(name = "orderId", example = "a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9")
     @Operation(summary = "Get Order by ID", description = "Retrieve a specific order by its ID")
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderGetResponse> getOrderById(@PathVariable UUID orderId) {

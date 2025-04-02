@@ -4,7 +4,6 @@ import com.erdemiryigit.brokagefirm.config.annotations.IsAdmin;
 import com.erdemiryigit.brokagefirm.dto.response.OrderMatchResponse;
 import com.erdemiryigit.brokagefirm.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,6 @@ public class AdminController {
      * @param orderId the ID of the order to match
      * @return the response entity containing the order match response
      */
-    @Parameter(name = "orderId", example = "a4a5a6a7-b4b5-c4c5-d4d5-e4e5e6e7e8e9")
     @Operation(summary = "Match Order", description = "Match a pending order.")
     @PutMapping("/orders/{orderId}")
     public ResponseEntity<OrderMatchResponse> matchOrder(@PathVariable UUID orderId) {

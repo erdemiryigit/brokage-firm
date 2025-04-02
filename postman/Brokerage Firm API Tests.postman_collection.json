@@ -1,0 +1,1127 @@
+{
+	"info": {
+		"_postman_id": "42b3570e-250a-4509-a972-6898b49d71a1",
+		"name": "Brokerage Firm API Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14302406"
+	},
+	"item": [
+		{
+			"name": "1. Order Creation",
+			"item": [
+				{
+					"name": "Create Order - Valid (Employee)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var responseJson = pm.response.json();",
+									"pm.test(\"Order created with PENDING status\", function() {",
+									"    pm.expect(responseJson.orderResponseStatus).to.eql(\"SUCCESSFUL\");",
+									"    pm.expect(responseJson.id).to.not.be.null;",
+									"});",
+									"",
+									"if (responseJson && responseJson.id) {",
+									"    pm.collectionVariables.set('createdOrderId', responseJson.id);",
+									"    console.log('Order ID saved: ' + responseJson.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"ticker\": \"AAPL\",\n  \"orderSide\": \"BUY\",\n  \"size\": 5,\n  \"price\": 150.25\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order - Invalid Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"ticker\": \"AAPL\",\n  \"orderSide\": \"INVALID_SIDE\",\n  \"size\": -5,\n  \"price\": -150.25\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order - Missing Auth",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function() {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"ticker\": \"AAPL\",\n  \"orderSide\": \"BUY\",\n  \"size\": 5,\n  \"price\": 150.25\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order - Unauthorized Role",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function() {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{customerAuth}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"ticker\": \"AAPL\",\n  \"orderSide\": \"BUY\",\n  \"size\": 5,\n  \"price\": 150.25\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Get Orders",
+			"item": [
+				{
+					"name": "Get Order by CustomerId - Employee Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var responseJson = pm.response.json();",
+									"pm.test(\"Order details match created order\", function() {",
+									"    pm.expect(responseJson.id).to.eql(pm.collectionVariables.get('createdOrderId'));",
+									"    pm.expect(responseJson.status).to.eql(\"PENDING\");  // Changed from orderStatus to status",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders?customerId={{customerId}}&startDate=2025-03-03T00:00:00&endDate=2025-06-30T23:59:59",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							],
+							"query": [
+								{
+									"key": "customerId",
+									"value": "{{customerId}}"
+								},
+								{
+									"key": "startDate",
+									"value": "2025-03-03T00:00:00"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-06-30T23:59:59"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order by ID - Employee Invalid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 500\", function() {",
+									"    pm.response.to.have.status(500);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders?customerId={{customerId}}1&startDate=2025-06-01T00:00:00&endDate=2025-06-30T23:59:59",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							],
+							"query": [
+								{
+									"key": "customerId",
+									"value": "{{customerId}}1"
+								},
+								{
+									"key": "startDate",
+									"value": "2025-06-01T00:00:00"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-06-30T23:59:59"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order by ID - Customer Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Order belongs to customer\", function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('createdOrderId'));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/orders/b04c30d8-d679-40fb-b01d-c881b923fead",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"orders",
+								"b04c30d8-d679-40fb-b01d-c881b923fead"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Orders - Employee Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array with at least one order\", function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(Array.isArray(jsonData)).to.be.true;",
+									"    pm.expect(jsonData.length).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "employee",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "employee",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/orders?customerId={{customerId}}&startDate=2023-01-01T00:00:00&endDate=2025-12-31T23:59:59",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							],
+							"query": [
+								{
+									"key": "customerId",
+									"value": "{{customerId}}"
+								},
+								{
+									"key": "startDate",
+									"value": "2023-01-01T00:00:00"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-12-31T23:59:59"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Orders - Employee Missing Required Params",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function() {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Orders - Customer Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 204\", function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Admin Operations",
+			"item": [
+				{
+					"name": "Match Order - Admin Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Order status is updated\", function() {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('createdOrderId'));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/{{createdOrderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"{{createdOrderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Match Order - Admin Invalid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function() {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{adminAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/{{createdOrderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"{{createdOrderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Match Order - Unauthorized Role",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function() {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/{{createdOrderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"{{createdOrderId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Cancel Operations",
+			"item": [
+				{
+					"name": "Create Another Order for Cancellation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var responseJson = pm.response.json();",
+									"if (responseJson && responseJson.id) {",
+									"    pm.collectionVariables.set('orderToCancel', responseJson.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"ticker\": \"MSFT\",\n  \"orderSide\": \"BUY\",\n  \"size\": 3,\n  \"price\": 280.50\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order - Employee Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders/{{orderToCancel}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders",
+								"{{orderToCancel}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order for Customer Cancellation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var responseJson = pm.response.json();",
+									"if (responseJson && responseJson.id) {",
+									"    pm.collectionVariables.set('customerOrderToCancel', responseJson.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"ticker\": \"EREGL\",\n  \"orderSide\": \"BUY\",\n  \"size\": 1,\n  \"price\": 130.75\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order - Customer Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/orders/{{customerOrderToCancel}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"orders",
+								"{{customerOrderToCancel}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Already Cancelled Order - Employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 404\", function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders/{{customerOrderToCancel}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders",
+								"{{customerOrderToCancel}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Asset Operations",
+			"item": [
+				{
+					"name": "Get Customer Assets - Employee Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 204\", function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "employee",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "employee",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/orders/customers/{{customerId}}/assets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders",
+								"customers",
+								"{{customerId}}",
+								"assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Assets - Employee Invalid Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 500\", function() {",
+									"    pm.response.to.have.status(500);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{employeeAuth}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/orders/customers/123456789/assets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"orders",
+								"customers",
+								"123456789",
+								"assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Assets - Customer Valid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 204\", function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/assets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Assets - Customer Filtered by Ticker",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 204\", function() {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "customer1",
+									"type": "string"
+								},
+								{
+									"key": "undefined",
+									"type": "any"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/assets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"assets"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8081/brokage-firm"
+		},
+		{
+			"key": "orderApiUrl",
+			"value": "{{baseUrl}}/api/v1/orders"
+		},
+		{
+			"key": "adminApiUrl",
+			"value": "{{baseUrl}}/api/v1/admin/orders"
+		},
+		{
+			"key": "customerApiUrl",
+			"value": "{{baseUrl}}/api/v1/customers"
+		},
+		{
+			"key": "adminAuth",
+			"value": "Basic YWRtaW46YWRtaW4="
+		},
+		{
+			"key": "employeeAuth",
+			"value": "Basic ZW1wbG95ZWU6ZW1wbG95ZWU="
+		},
+		{
+			"key": "customerAuth",
+			"value": "Basic Y3VzdG9tZXI6Y3VzdG9tZXI="
+		},
+		{
+			"key": "invalidAuth",
+			"value": "Basic aW52YWxpZDppbnZhbGlk"
+		},
+		{
+			"key": "customerId",
+			"value": "a1a2a3a4-b1b2-c1c2-d1d2-e1e2e3e4e5e6"
+		},
+		{
+			"key": "createdOrderId",
+			"value": ""
+		},
+		{
+			"key": "orderToCancel",
+			"value": ""
+		},
+		{
+			"key": "customerOrderToCancel",
+			"value": ""
+		}
+	]
+}
